@@ -112,7 +112,7 @@ func (ai *AI) say(guildID, channelID, text string) error {
 		return err
 	}
 
-	filepath := fmt.Sprintf("/tmp/ai/%d.wav", rand.Int())
+	filepath := fmt.Sprintf("./%d.wav", rand.Int())
 	if err := tts(ai.ttsAddress, text, filepath); err != nil {
 		return fmt.Errorf("got err when creating tts %v\n", err)
 	}
