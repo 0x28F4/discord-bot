@@ -1,4 +1,4 @@
-module example.com/discord-ai
+module github.com/0x28F4/discord-bot
 
 go 1.20
 

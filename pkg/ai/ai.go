@@ -17,6 +17,7 @@ type Cmd interface {
 }
 
 type AI struct {
+	ttsAddress     string
 	openAIClient   *openai.Client
 	discordSession *discordgo.Session
 	queue          []Cmd
@@ -112,7 +113,7 @@ func (ai *AI) say(guildID, channelID, text string) error {
 	}
 
 	filepath := fmt.Sprintf("/tmp/ai/%d.wav", rand.Int())
-	if err := tts(text, filepath); err != nil {
+	if err := tts(ai.ttsAddress, text, filepath); err != nil {
 		return fmt.Errorf("got err when creating tts %v\n", err)
 	}
 
@@ -128,9 +129,10 @@ func (ai *AI) say(guildID, channelID, text string) error {
 	return nil
 }
 
-func New(discordSession *discordgo.Session, openAIClient *openai.Client) *AI {
+func New(ttsAddress string, discordSession *discordgo.Session, openAIClient *openai.Client) *AI {
 	return &AI{
 		queue:          make([]Cmd, 0),
+		ttsAddress:     ttsAddress,
 		discordSession: discordSession,
 		openAIClient:   openAIClient,
 	}

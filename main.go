@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	"example.com/discord-ai/pkg/ai"
+	"github.com/0x28F4/discord-bot/pkg/ai"
 	"github.com/alecthomas/kong"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sashabaranov/go-openai"
@@ -20,6 +20,7 @@ type Run struct {
 	OpenAIToken string `help:"API key for openai" env:"OPEN_API_KEY"`
 	GuildID     string `help:"guild id of the discord server" env:"GUILD_ID"`
 	ChannelID   string `help:"channel id that the bot should join" env:"CHANNEL_ID"`
+	TTSAddress  string `help:"tts address" default:"http://localhost:5002" env:"TTS_ADDRESS"`
 }
 
 func main() {
@@ -40,7 +41,7 @@ func (r *Run) Run() error {
 	}
 	defer discord.Close()
 
-	aiWrapper := ai.New(discord, openAIClient)
+	aiWrapper := ai.New(r.TTSAddress, discord, openAIClient)
 	removeCmds := registerCommands(discord, aiWrapper, r.GuildID)
 	defer removeCmds()
 

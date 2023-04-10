@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"example.com/discord-ai/pkg/ai"
+	"github.com/0x28F4/discord-bot/pkg/ai"
 	"github.com/bwmarrin/discordgo"
 )
 

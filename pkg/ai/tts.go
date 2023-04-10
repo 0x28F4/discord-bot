@@ -11,8 +11,8 @@ import (
 
 var client = &http.Client{}
 
-func tts(text, filepath string) error {
-	path := fmt.Sprintf("http://localhost:5002/api/tts?text=%s&speaker_id=p364&style_wav=&language_id=", url.QueryEscape(text))
+func tts(ttsAddress, text, filepath string) error {
+	path := fmt.Sprintf("%s/api/tts?text=%s&speaker_id=p364&style_wav=&language_id=", ttsAddress, url.QueryEscape(text))
 	fmt.Printf("sending request to %s\n", path)
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
