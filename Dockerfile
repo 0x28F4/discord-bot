@@ -1,5 +1,5 @@
 FROM golang:1.20 as base
-RUN apt update && apt install -y libopus-dev libopusfile-dev
+RUN apt update && apt install -y libopus-dev libopusfile-dev ffmpeg
 
 FROM base as build-env
 WORKDIR /app
