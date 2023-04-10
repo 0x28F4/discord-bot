@@ -59,7 +59,7 @@ type SayCmd struct {
 
 func (s *SayCmd) Do(ai *AI) error {
 	if err := ai.say(s.GuildId, s.ChannelId, s.Prompt); err != nil {
-		return fmt.Errorf("couldn't say \"%s\"\n", s.Prompt)
+		return fmt.Errorf("couldn't say \"%s\",err:%v\n", s.Prompt, err)
 	}
 	return nil
 }
