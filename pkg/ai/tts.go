@@ -9,10 +9,22 @@ import (
 	"os"
 )
 
+type tts struct {
+	address string
+	voice   string
+}
+
+func NewTTS(address string) *tts {
+	return &tts{
+		address: address,
+		voice:   "p364",
+	}
+}
+
 var client = &http.Client{}
 
-func tts(ttsAddress, text, filepath string) error {
-	path := fmt.Sprintf("%s/api/tts?text=%s&speaker_id=p364&style_wav=&language_id=", ttsAddress, url.QueryEscape(text))
+func (t *tts) ToFile(text, filepath string) error {
+	path := fmt.Sprintf("%s/api/tts?text=%s&speaker_id=%s&style_wav=&language_id=", t.address, url.QueryEscape(text), t.voice)
 	fmt.Printf("sending request to %s\n", path)
 	req, err := http.NewRequest(http.MethodGet, path, nil)
 	if err != nil {
@@ -44,4 +56,8 @@ func tts(ttsAddress, text, filepath string) error {
 	}
 
 	return fmt.Errorf("unexpected status code: %d, err: %s", resp.StatusCode, string(bts))
+}
+
+func (t *tts) ChangeVoice(v string) {
+	t.voice = v
 }

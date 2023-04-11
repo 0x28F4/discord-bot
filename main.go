@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/0x28F4/discord-bot/pkg/ai"
 	"github.com/alecthomas/kong"
@@ -41,14 +42,14 @@ func (r *Run) Run() error {
 	}
 	defer discord.Close()
 
-	aiWrapper := ai.New(r.TTSAddress, discord, openAIClient)
+	aiWrapper := ai.New(r.GuildID, r.TTSAddress, discord, openAIClient)
 	removeCmds := registerCommands(discord, aiWrapper, r.GuildID)
 	defer removeCmds()
 
 	go aiWrapper.Work()
 
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 	log.Println("Press Ctrl+C to exit")
 	<-stop
 	return nil
