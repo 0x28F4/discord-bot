@@ -79,7 +79,7 @@ type AskCmd struct {
 func (a *AskCmd) Do(ai *AI) error {
 	output, err := ai.think(a.Prompt)
 	if err != nil {
-		return fmt.Errorf("couldn't come up with an answer for %s\n", a.Prompt)
+		return fmt.Errorf("couldn't come up with an answer for %s, reason: %v\n", a.Prompt, err)
 	} else if err := ai.say(output); err != nil {
 		return fmt.Errorf("couldn't say \"%s\"\n", output)
 	}
