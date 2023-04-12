@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/0x28F4/discord-bot/pkg/tts"
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sashabaranov/go-openai"
@@ -20,7 +21,7 @@ type AI struct {
 	ttsAddress   string
 	openAIClient *openai.Client
 	queue        []Cmd
-	TTS          *tts
+	TTS          tts.TTS
 	Discord      *discordChannelSession
 }
 
@@ -112,23 +113,48 @@ func (ai *AI) think(prompt string) (out string, err error) {
 }
 
 func (ai *AI) say(text string) error {
-	filepath := fmt.Sprintf("./%d.wav", rand.Int())
-	if err := ai.TTS.ToFile(text, filepath); err != nil {
+	basePath := fmt.Sprintf("./%d", rand.Int())
+	file, err := ai.TTS.ToFile(text, basePath)
+	if err != nil {
 		return fmt.Errorf("got err when creating tts %v\n", err)
 	}
-	defer os.Remove(filepath)
+	defer os.Remove(file)
 
 	if ai.Discord.voiceConnection == nil {
 		return fmt.Errorf("voice connection is nil, can't say anything")
 	}
-	dgvoice.PlayAudioFile(ai.Discord.voiceConnection, filepath, make(chan bool))
+	dgvoice.PlayAudioFile(ai.Discord.voiceConnection, file, make(chan bool))
 	ai.Discord.session.UpdateGameStatus(0, fmt.Sprintf("responding with %s", text))
 	defer ai.Discord.session.UpdateGameStatus(0, "")
 
 	return nil
 }
 
-func New(guildId, ttsAddress string, discordSession *discordgo.Session, openAIClient *openai.Client) *AI {
+type CoquiConfig struct {
+	Address string
+	Voice   string
+}
+
+type ElevenLabsConfig struct {
+	APIKey string
+	Voice  string
+}
+
+type TTSConfig struct {
+	Type       string
+	Coqui      CoquiConfig
+	ElevenLabs ElevenLabsConfig
+}
+
+func New(guildId string, discordSession *discordgo.Session, openAIClient *openai.Client, ttsConfig TTSConfig) *AI {
+	var textToSpeech tts.TTS
+	if ttsConfig.Type == "coqui" {
+		textToSpeech = tts.NewCoqui(ttsConfig.Coqui.Address, ttsConfig.Coqui.Voice)
+	}
+	if ttsConfig.Type == "elevenlabs" {
+		textToSpeech = tts.NewElevenlabs(ttsConfig.ElevenLabs.APIKey, ttsConfig.ElevenLabs.Voice)
+	}
+
 	return &AI{
 		queue:        make([]Cmd, 0),
 		openAIClient: openAIClient,
@@ -136,6 +162,6 @@ func New(guildId, ttsAddress string, discordSession *discordgo.Session, openAICl
 			guildId: guildId,
 			session: discordSession,
 		},
-		TTS: NewTTS(ttsAddress),
+		TTS: textToSpeech,
 	}
 }
