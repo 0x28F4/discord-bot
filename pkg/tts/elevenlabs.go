@@ -38,6 +38,10 @@ type elevenlabsPayload struct {
 }
 
 func (t *elevenlabs) ToFile(text, filepath string) (string, error) {
+	if t.apiKey == "" {
+		return "", fmt.Errorf("no elevenlabs API key present")
+	}
+
 	p := fmt.Sprintf("https://api.elevenlabs.io/v1/text-to-speech/%s", t.voice)
 	var body bytes.Buffer
 	if err := json.NewEncoder(&body).Encode(elevenlabsPayload{
@@ -51,6 +55,7 @@ func (t *elevenlabs) ToFile(text, filepath string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	req.Header.Add("xi-api-key", t.apiKey)
 
 	resp, err := client.Do(req)
 	if err != nil {
