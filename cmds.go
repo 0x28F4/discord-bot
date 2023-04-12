@@ -2,8 +2,11 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/0x28F4/discord-bot/pkg/ai"
+	"github.com/0x28F4/discord-bot/pkg/elevenlabs"
+	"github.com/0x28F4/discord-bot/pkg/request"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -26,7 +29,12 @@ func respond(s *discordgo.Session, i *discordgo.InteractionCreate, text string) 
 	})
 }
 
-func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string) (removeCmds func()) {
+func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, elevenlabsAPIKey string) (removeCmds func()) {
+	voices := makeVoiceChoices()
+	if elevenlabsAPIKey != "" {
+		voices = makeElevenlabsVoices(elevenlabsAPIKey)
+	}
+
 	commands := []*discordgo.ApplicationCommand{
 		{
 			Name:        "say",
@@ -77,7 +85,7 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string) (r
 			Options: []*discordgo.ApplicationCommandOption{
 				{
 					Type:        discordgo.ApplicationCommandOptionString,
-					Choices:     makeVoiceChoices(),
+					Choices:     voices,
 					Name:        "voice",
 					Description: "pick the voice of the bot",
 					Required:    true,
@@ -193,6 +201,27 @@ func makeVoiceChoices() []*discordgo.ApplicationCommandOptionChoice {
 		options[i] = &discordgo.ApplicationCommandOptionChoice{
 			Name:  v,
 			Value: v,
+		}
+	}
+
+	return options
+}
+
+func makeElevenlabsVoices(apiKey string) []*discordgo.ApplicationCommandOptionChoice {
+	headers := map[string]string{
+		"xi-api-key": apiKey,
+	}
+	result, err := request.Request[elevenlabs.VoicesResponse](http.MethodGet, "https://api.elevenlabs.io/v1/voices", headers, nil)
+	if err != nil {
+		panic(fmt.Sprintf("couldn't retrieve voices from elevenlabs: %v", err))
+	}
+
+	options := make([]*discordgo.ApplicationCommandOptionChoice, len(result.Voices))
+	for i := range options {
+		voice := result.Voices[i]
+		options[i] = &discordgo.ApplicationCommandOptionChoice{
+			Name:  voice.Name,
+			Value: voice.VoiceID,
 		}
 	}
 

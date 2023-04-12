@@ -57,7 +57,7 @@ func (r *Run) Run() error {
 			Voice:  r.ElevenLabsVoice,
 		},
 	})
-	removeCmds := registerCommands(discord, aiWrapper, r.GuildID)
+	removeCmds := registerCommands(discord, aiWrapper, r.GuildID, r.ElevenLabsAPIKey)
 	defer removeCmds()
 
 	go aiWrapper.Work()
