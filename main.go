@@ -54,6 +54,7 @@ func (r *Run) Run() error {
 		},
 		ElevenLabs: ai.ElevenLabsConfig{
 			APIKey: r.ElevenLabsAPIKey,
+			Voice:  r.ElevenLabsVoice,
 		},
 	})
 	removeCmds := registerCommands(discord, aiWrapper, r.GuildID)
