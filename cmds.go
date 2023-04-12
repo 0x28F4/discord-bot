@@ -216,12 +216,13 @@ func makeElevenlabsVoices(apiKey string) []*discordgo.ApplicationCommandOptionCh
 		panic(fmt.Sprintf("couldn't retrieve voices from elevenlabs: %v", err))
 	}
 
-	options := make([]*discordgo.ApplicationCommandOptionChoice, len(result.Voices))
-	for i := range options {
-		voice := result.Voices[i]
-		options[i] = &discordgo.ApplicationCommandOptionChoice{
-			Name:  voice.Name,
-			Value: voice.VoiceID,
+	options := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+	for _, voice := range result.Voices {
+		if voice.Category != "premade" {
+			options = append(options, &discordgo.ApplicationCommandOptionChoice{
+				Name:  voice.Name,
+				Value: voice.VoiceID,
+			})
 		}
 	}
 
