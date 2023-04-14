@@ -133,7 +133,11 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 			if !hasText {
 				fmt.Printf("no text was given")
 			}
-			mode := optionMap["mode"].Value.(string)
+			modeOption := optionMap["mode"]
+			mode := ""
+			if modeOption != nil {
+				mode = modeOption.Value.(string)
+			}
 
 			aiWrapper.Queue(&ai.AskCmd{
 				Prompt:  text,
