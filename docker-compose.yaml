@@ -1,7 +1,7 @@
 version: '2'
 services:
   ai:
-    image: ai:latest
+    image: coppermeson/discord-gpt-bot:latest
     command: ["run"]
     network_mode: "host"
     env_file:
