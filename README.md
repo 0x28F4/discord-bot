@@ -7,3 +7,5 @@ Discord bot that can say things and answer questions:
 - [ ] multi guild capabilities
 - [ ] voice samples from
 - [x] elevenlabs voice pick
+- [ ] alpine image
+- [ ] jailbreak queries

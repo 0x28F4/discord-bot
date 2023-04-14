@@ -6,6 +6,7 @@ import (
 
 	"github.com/0x28F4/discord-bot/pkg/ai"
 	"github.com/0x28F4/discord-bot/pkg/elevenlabs"
+	"github.com/0x28F4/discord-bot/pkg/prompts"
 	"github.com/0x28F4/discord-bot/pkg/request"
 	"github.com/bwmarrin/discordgo"
 )
@@ -57,6 +58,13 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 					Name:        "text",
 					Description: "whats your question senpai?",
 					Required:    true,
+				},
+				{
+					Type:        discordgo.ApplicationCommandOptionString,
+					Name:        "mode",
+					Description: "change the behavior of the bot with prompt engineering",
+					Choices:     makePromptEngineering(),
+					Required:    false,
 				},
 			},
 		},
@@ -125,10 +133,12 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 			if !hasText {
 				fmt.Printf("no text was given")
 			}
+			mode := optionMap["mode"].Value.(string)
 
 			aiWrapper.Queue(&ai.AskCmd{
 				Prompt:  text,
 				GuildId: guildID,
+				Mode:    mode,
 			})
 		},
 		"join": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
@@ -226,5 +236,24 @@ func makeElevenlabsVoices(apiKey string) []*discordgo.ApplicationCommandOptionCh
 		}
 	}
 
+	return options
+}
+
+func makePromptEngineering() []*discordgo.ApplicationCommandOptionChoice {
+	options := make([]*discordgo.ApplicationCommandOptionChoice, 0)
+	i := 0
+	for mode := range prompts.Prompts {
+		if i > 24 {
+			break
+		}
+		if mode == "" {
+			continue
+		}
+		options = append(options, &discordgo.ApplicationCommandOptionChoice{
+			Name:  mode,
+			Value: mode,
+		})
+		i += 1
+	}
 	return options
 }

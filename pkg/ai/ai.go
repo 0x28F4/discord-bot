@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/0x28F4/discord-bot/pkg/prompts"
 	"github.com/0x28F4/discord-bot/pkg/tts"
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
@@ -74,10 +75,11 @@ type AskCmd struct {
 	Prompt    string
 	GuildId   string
 	ChannelId string
+	Mode      string
 }
 
 func (a *AskCmd) Do(ai *AI) error {
-	output, err := ai.think(a.Prompt)
+	output, err := ai.think(a.Prompt, a.Mode)
 	if err != nil {
 		return fmt.Errorf("couldn't come up with an answer for %s, reason: %v\n", a.Prompt, err)
 	} else if err := ai.say(output); err != nil {
@@ -87,7 +89,12 @@ func (a *AskCmd) Do(ai *AI) error {
 	return nil
 }
 
-func (ai *AI) think(prompt string) (out string, err error) {
+func (ai *AI) think(prompt, mode string) (out string, err error) {
+	p, hasMode := prompts.Prompts[mode]
+	if !hasMode {
+		return "", fmt.Errorf("couldn't find prompt for \"%s\"", mode)
+	}
+
 	resp, err := ai.openAIClient.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -95,7 +102,7 @@ func (ai *AI) think(prompt string) (out string, err error) {
 			Messages: []openai.ChatCompletionMessage{
 				{
 					Role:    openai.ChatMessageRoleSystem,
-					Content: "you are a discord bot and respond to messages by users",
+					Content: p.Prompt,
 				},
 				{
 					Role:    openai.ChatMessageRoleUser,
@@ -109,7 +116,7 @@ func (ai *AI) think(prompt string) (out string, err error) {
 		return "", fmt.Errorf("think error: %w", err)
 	}
 
-	return resp.Choices[0].Message.Content, nil
+	return p.Format(resp.Choices[0].Message.Content), nil
 }
 
 func (ai *AI) say(text string) error {
