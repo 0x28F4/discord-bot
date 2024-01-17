@@ -84,6 +84,10 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 			},
 		},
 		{
+			Name:        "transcribe",
+			Description: "make bot listen to you and transcribe audio",
+		},
+		{
 			Name:        "leave",
 			Description: "make the bot leave the current voice channel",
 		},
@@ -153,9 +157,14 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 				fmt.Printf("no channel id given")
 				return
 			}
+			fmt.Println("channelId", channelId)
 			if err := aiWrapper.Discord.JoinChannel(channelId); err != nil {
 				fmt.Println(err)
 			}
+		},
+		"transcribe": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
+			respond(s, i, "Listening...")
+			aiWrapper.Queue(&ai.ListenCmd{})
 		},
 		"leave": func(s *discordgo.Session, i *discordgo.InteractionCreate) {
 			respond(s, i, "I'm leaving the voice channel senpai")
@@ -189,12 +198,12 @@ func registerCommands(s *discordgo.Session, aiWrapper *ai.AI, guildID string, el
 
 	return func() {
 		fmt.Println("performing cleanup tasks")
-		for _, v := range registeredCommands {
-			err := s.ApplicationCommandDelete(s.State.User.ID, guildID, v.ID)
-			if err != nil {
-				fmt.Printf("Cannot delete '%v' command: %v\n", v.Name, err)
-			}
-		}
+		// for _, v := range registeredCommands {
+		// 	err := s.ApplicationCommandDelete(s.State.User.ID, guildID, v.ID)
+		// 	if err != nil {
+		// 		fmt.Printf("Cannot delete '%v' command: %v\n", v.Name, err)
+		// 	}
+		// }
 
 		if aiWrapper.Discord.Connected() {
 			if err := aiWrapper.Discord.LeaveChannel(); err != nil {

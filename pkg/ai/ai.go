@@ -3,12 +3,20 @@ package ai
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
+	"github.com/0x28F4/discord-bot/pkg/engines/decoder"
+	"github.com/0x28F4/discord-bot/pkg/engines/voiceactivation"
 	"github.com/0x28F4/discord-bot/pkg/prompts"
+	"github.com/0x28F4/discord-bot/pkg/stt"
 	"github.com/0x28F4/discord-bot/pkg/tts"
+	"github.com/GRVYDEV/S.A.T.U.R.D.A.Y/stt/engine"
+
 	"github.com/bwmarrin/dgvoice"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sashabaranov/go-openai"
@@ -19,6 +27,7 @@ type Cmd interface {
 }
 
 type AI struct {
+	sttEngine    *voiceactivation.Engine
 	ttsAddress   string
 	openAIClient *openai.Client
 	queue        []Cmd
@@ -137,6 +146,113 @@ func (ai *AI) say(text string) error {
 	return nil
 }
 
+const (
+	sampleRate  = engine.SampleRate // (16000)
+	channels    = 1                 // decode into 1 channel since that is what whisper.cpp wants
+	frameSizeMs = 20
+)
+
+var frameSize = channels * frameSizeMs * sampleRate / 1000
+
+func heyGPT(text string) bool {
+	// Ignore case using "(?i)" in the regex pattern.
+	match, err := regexp.MatchString("(?i)(hey|hi|hello|cheers|hay).{0,5}(gpt|ai|waifu|google|siri|alexa)", text)
+	if err != nil {
+		return false
+	}
+	if match {
+		return true
+	}
+	match, err = regexp.MatchString("(?i)(siri|alexa|dick)", text)
+	if err != nil {
+		return false
+	}
+
+	return match
+}
+
+func fuckoff(text string) bool {
+	match, err := regexp.MatchString("(?i)fuck.{0,5}off", text)
+	if err != nil {
+		return false
+	}
+	return match
+}
+
+type ListenCmd struct{}
+
+func (a *ListenCmd) Do(ai *AI) error {
+	dec, err := decoder.NewOpusDecoder(sampleRate, channels)
+	if err != nil {
+		return err
+	}
+
+	var firstTimeStamp uint32
+	pcm := make([]float32, frameSize)
+	v := ai.Discord.voiceConnection
+	go func() {
+		for {
+			if v.Ready == false || v.OpusRecv == nil {
+				return
+			}
+
+			pkt, ok := <-v.OpusRecv
+			if !ok {
+				return
+			}
+
+			if _, err := dec.Decode(pkt.Opus, pcm); err != nil {
+				return
+			}
+
+			if firstTimeStamp == 0 {
+				fmt.Printf("Resetting timestamp bc firstTimeStamp is 0...  timestamp=%d\n", pkt.Timestamp)
+				firstTimeStamp = pkt.Timestamp
+			}
+
+			ai.sttEngine.Write(pcm)
+		}
+	}()
+
+	alreadyTalking := false
+	ai.sttEngine.OnTranscribe = func(trans engine.Transcription) {
+		text := make([]string, 0)
+		for _, segment := range trans.Transcriptions {
+			text = append(text, segment.Text)
+		}
+
+		prompt := strings.Join(text, " ")
+
+		if fuckoff(prompt) {
+			if err := ai.Discord.LeaveChannel(); err != nil {
+				fmt.Printf("can't leave, %v\n", err)
+			}
+		}
+
+		if heyGPT(prompt) {
+			if alreadyTalking {
+				fmt.Printf("already talking, skipping request")
+				return
+			}
+			alreadyTalking = true
+			defer func() {
+				alreadyTalking = false
+			}()
+			toSay, err := ai.think(prompt, "")
+			if err != nil {
+				fmt.Printf("can't think, %v\n", err)
+				return
+			}
+
+			if err := ai.say(toSay); err != nil {
+				fmt.Printf("can't say, %v\n", err)
+			}
+		}
+	}
+
+	return nil
+}
+
 type CoquiConfig struct {
 	Address string
 	Voice   string
@@ -162,7 +278,17 @@ func New(guildId string, discordSession *discordgo.Session, openAIClient *openai
 		textToSpeech = tts.NewElevenlabs(ttsConfig.ElevenLabs.APIKey, ttsConfig.ElevenLabs.Voice)
 	}
 
+	whisperCpp, err := stt.New("./models/ggml-base.en.bin")
+	if err != nil {
+		log.Fatalln(err, "error creating whisper model")
+	}
+
+	sttEngine, err := voiceactivation.New(voiceactivation.Params{
+		Transcriber: whisperCpp,
+	})
+
 	return &AI{
+		sttEngine:    sttEngine,
 		queue:        make([]Cmd, 0),
 		openAIClient: openAIClient,
 		Discord: &discordChannelSession{

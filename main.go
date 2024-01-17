@@ -1,15 +1,19 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/0x28F4/discord-bot/pkg/ai"
+	logr "github.com/GRVYDEV/S.A.T.U.R.D.A.Y/log"
 	"github.com/alecthomas/kong"
 	"github.com/bwmarrin/discordgo"
 	"github.com/sashabaranov/go-openai"
+	"golang.org/x/exp/slog"
 )
 
 var CLI struct {
@@ -21,7 +25,7 @@ type Run struct {
 	OpenAIToken      string `help:"API key for openai" env:"OPEN_API_KEY"`
 	GuildID          string `help:"guild id of the discord server" env:"GUILD_ID"`
 	ChannelID        string `help:"channel id that the bot should join" env:"CHANNEL_ID"`
-	TTSProvider      string `help:"set the tts provider" required:"" enum:"coqui,elevenlabs" env:"TTS_PROVIDER"`
+	TTSProvider      string `help:"set the tts provider" required:"" enum:"coqui,elevenlabs" default:"elevenlabs" env:"TTS_PROVIDER"`
 	CoquiTTSAddress  string `help:"coqui tts address" default:"http://localhost:5002" env:"COQUI_TTS_ADDRESS"`
 	CoquiVoice       string `help:"coqui tts voice" default:"p364" env:"COQUI_VOICE"`
 	ElevenLabsVoice  string `help:"elevenlabs tts voice" env:"ELEVEN_LABS_VOICE"`
@@ -58,6 +62,16 @@ func (r *Run) Run() error {
 		},
 	})
 	removeCmds := registerCommands(discord, aiWrapper, r.GuildID, r.ElevenLabsAPIKey)
+
+	logr.SetLevel(slog.LevelDebug)
+	// autojoin on start
+	go func() {
+		aiWrapper.Discord.JoinChannel("712330019866673232")
+		time.Sleep(100 * time.Millisecond)
+		fmt.Println("listening")
+		aiWrapper.Queue(&ai.ListenCmd{})
+	}()
+
 	defer removeCmds()
 
 	go aiWrapper.Work()
