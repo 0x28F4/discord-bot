@@ -45,10 +45,9 @@ async def join(
 @bot.slash_command(name="quit", description="Quits all vcs")
 async def quit(
     ctx: dc.ApplicationContext,
-    force: dc.Option(dc.SlashCommandOptionType.boolean) # type: ignore
 ):
     for vc in connections.values():
-        await vc.disconnect(force=force)
+        await vc.disconnect()
     await ctx.respond("Quit all VCs")
 
 connections: Dict[int, dc.VoiceClient] = {}
@@ -61,14 +60,12 @@ async def join_channel(
     connections.update({ctx.guild.id: vc})
 
     def on_done(sink: RecognizeSink, channel: dc.TextChannel, *args):
-        for user_id, audio_data in sink.audio_data.items():
-            data = cast(dc.sinks.core.AudioData, audio_data)
-            with open(f"./raw_{user_id}.out", "wb") as f:
-                audio_file = cast(io.BytesIO, data.file)
-                f.write(audio_file.getbuffer())
+       pass
         
+    sink = RecognizeSink()
+    sink.user_id = ctx.author.id
     vc.start_recording(
-        RecognizeSink(),
+       sink,
         on_done,
         ctx.channel
     )

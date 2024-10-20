@@ -8,7 +8,7 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 py-cord = {extras = ["voice"], version = "^2.6.1"}
-speechrecognition = "^3.11.0"
+google-cloud-speech = "^2.27.0"
 
 
 [build-system]
