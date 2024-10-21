@@ -6,12 +6,6 @@ from typing import Iterable
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
 def get_current_time() -> int:
-    """Return Current Time in MS.
-
-    Returns:
-        int: Current Time in MS.
-    """
-
     return int(round(time.time() * 1000))
 
 RED = "\033[0;31m"
@@ -34,11 +28,8 @@ class DiscordStream:
         # could check if the user is the author or not
         self._buff.put(data)
         
-    def generator(self) -> object:
+    def generator(self):
         """Stream Audio from discord to API and to local buffer
-
-        Args:
-            self: The class instance.
 
         returns:
             The data from the audio stream.
@@ -68,10 +59,7 @@ class DiscordStream:
             yield b"".join(data)
 
 
-from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
-
-
-def listen_print_loop(responses: Iterable[cloud_speech_types.StreamingRecognizeResponse], stream: DiscordStream) -> None:
+def listen(responses: Iterable[cloud_speech_types.StreamingRecognizeResponse]) -> None:
     for response in responses:
         if not response.results:
             continue
@@ -87,16 +75,7 @@ def listen_print_loop(responses: Iterable[cloud_speech_types.StreamingRecognizeR
             sys.stdout.write(GREEN)
             sys.stdout.write("\033[K")
             sys.stdout.write(transcript + "\n")
-
-            # Exit recognition if any of the transcribed phrases could be
-            # one of our keywords.
-            if re.search(r"\b(exit|quit)\b", transcript, re.I):
-                sys.stdout.write(YELLOW)
-                sys.stdout.write("Exiting...\n")
-                stream.closed = True
-                break
         else:
             sys.stdout.write(RED)
             sys.stdout.write("\033[K")
             sys.stdout.write(transcript + "\r")
-

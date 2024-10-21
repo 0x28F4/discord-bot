@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import asyncio
-from typing import Dict, cast
+from typing import Dict, Optional, cast
 import discord as dc
 import os
 from google.cloud.speech_v2 import SpeechClient
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
-from discord_stream import DiscordStream, listen_print_loop
+from discord_stream import DiscordStream, listen
 from sink import Sink
 
 assert (TOKEN := os.getenv('DISCORD_TOKEN'))
@@ -57,10 +57,26 @@ async def quit(
 
 connections: Dict[int, dc.VoiceClient] = {}
 
+async def connect_channel(ctx: dc.ApplicationContext, channel: dc.channel.VoiceChannel):
+    vc = ctx.voice_client
+    if vc:
+        if vc.channel.id == channel.id:
+            return vc
+        
+        # stop recording in other channel and disconnect
+        if vc.recording:
+            vc.stop_recording()
+        await vc.disconnect()
+    # anyways, gotta connect
+    vc = await channel.connect()
+    connections.update({ctx.guild.id: vc})
+    return vc
+
 async def join_channel(
     ctx: dc.ApplicationContext,
     channel: dc.channel.VoiceChannel,
 ):
+    vc: dc.VoiceClient = await connect_channel(ctx, channel)
     client = SpeechClient()
     recognition_config = cloud_speech_types.RecognitionConfig(
         explicit_decoding_config=cloud_speech_types.ExplicitDecodingConfig(
@@ -82,16 +98,12 @@ async def join_channel(
         streaming_config=streaming_config,
     )
     
-    vc = await channel.connect()
-    connections.update({ctx.guild.id: vc})
-
     async def on_done(sink: Sink, channel: dc.TextChannel, *args):
         pass
 
     stream=DiscordStream()
     sink = Sink(stream=stream)
     sink.user_id = ctx.author.id
-
 
     def requests_gen(config: cloud_speech_types.RecognitionConfig, audio: list):
         """Helper function to generate the requests list for the streaming API.
@@ -102,8 +114,12 @@ async def join_channel(
         Returns:
             The list of requests for the streaming API.
         """
-        yield config
+
+        started = False
         for buffer in audio:
+            if not started:
+                yield config
+                started = True
             for i in range(0, len(buffer), SPEECH_MAX_CHUNK_SIZE):
                 chunk = buffer[i:SPEECH_MAX_CHUNK_SIZE]
                 if any(chunk):
@@ -117,7 +133,20 @@ async def join_channel(
         ctx.channel
     )
     await ctx.respond("Started recognizing!")
-    responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
-    listen_print_loop(responses_iterator, stream)
+
+    import threading
+    def speech_loop(client, config_request, audio_generator):
+        responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
+        listen(responses_iterator)
+
+
+    t = threading.Thread(
+        target=speech_loop,
+        args=(
+            client, config_request, audio_generator,
+        ),
+    )
+    t.start()
+    print("[join] end")
 
 bot.run(TOKEN)
