@@ -116,15 +116,16 @@ async def join_channel(
         """
 
         started = False
+        # last_is_empty_flag = False
         for buffer in audio:
             if not started:
                 yield config
                 started = True
             for i in range(0, len(buffer), SPEECH_MAX_CHUNK_SIZE):
                 chunk = buffer[i:SPEECH_MAX_CHUNK_SIZE]
+                # must turn off discords voice activation, otherwise this won't recognize silence
                 if any(chunk):
                     yield cloud_speech_types.StreamingRecognizeRequest(audio=chunk)
-
 
     audio_generator = stream.generator()
     vc.start_recording(
@@ -136,8 +137,11 @@ async def join_channel(
 
     import threading
     def speech_loop(client, config_request, audio_generator):
-        responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
-        listen(responses_iterator)
+        try:
+            responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
+            listen(responses_iterator)
+        except Exception as e:
+            print("got exception in speech loop: ", e)
 
 
     t = threading.Thread(
