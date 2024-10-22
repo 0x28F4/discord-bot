@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 
-import asyncio
-from typing import Dict, Optional, cast
+import io
+from time import sleep
+from typing import Dict, cast
 import discord as dc
 import os
 from google.cloud.speech_v2 import SpeechClient
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
-from discord_stream import DiscordStream, listen
+from discord_stream import DiscordStream
+from brain import echo
 from sink import Sink
 
 assert (TOKEN := os.getenv('DISCORD_TOKEN'))
@@ -98,12 +100,10 @@ async def join_channel(
         streaming_config=streaming_config,
     )
     
-    async def on_done(sink: Sink, channel: dc.TextChannel, *args):
-        pass
-
     stream=DiscordStream()
     sink = Sink(stream=stream)
     sink.user_id = ctx.author.id
+    audio_generator = stream.generator()
 
     def requests_gen(config: cloud_speech_types.RecognitionConfig, audio: list):
         """Helper function to generate the requests list for the streaming API.
@@ -127,19 +127,28 @@ async def join_channel(
                 if any(chunk):
                     yield cloud_speech_types.StreamingRecognizeRequest(audio=chunk)
 
-    audio_generator = stream.generator()
+
+    async def on_done(sink: Sink, channel: dc.TextChannel, *args):
+        pass
+
     vc.start_recording(
         sink,
         on_done,
         ctx.channel
     )
-    await ctx.respond("Started recognizing!")
 
+    def handle_audio(audio_data: bytes):
+        buffer = io.BytesIO(audio_data)
+        buffer.seek(0)
+        source = dc.FFmpegPCMAudio(buffer, pipe=True)
+        vc.play(source)
+
+    await ctx.respond("Started recognizing!")
     import threading
     def speech_loop(client, config_request, audio_generator):
         try:
             responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
-            listen(responses_iterator)
+            echo(responses_iterator, on_audio=handle_audio)
         except Exception as e:
             print("got exception in speech loop: ", e)
 

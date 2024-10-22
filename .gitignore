@@ -3,3 +3,4 @@
 __debug_bin
 .env
 __pycache__
+.prompt

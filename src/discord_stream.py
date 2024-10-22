@@ -1,9 +1,5 @@
 import queue
-import re
-import sys
 import time
-from typing import Iterable
-from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
 def get_current_time() -> int:
     return int(round(time.time() * 1000))
@@ -58,24 +54,3 @@ class DiscordStream:
 
             yield b"".join(data)
 
-
-def listen(responses: Iterable[cloud_speech_types.StreamingRecognizeResponse]) -> None:
-    for response in responses:
-        if not response.results:
-            continue
-
-        result = response.results[0]
-
-        if not result.alternatives:
-            continue
-
-        transcript = result.alternatives[0].transcript
-
-        if result.is_final:
-            sys.stdout.write(GREEN)
-            sys.stdout.write("\033[K")
-            sys.stdout.write(transcript + "\n")
-        else:
-            sys.stdout.write(RED)
-            sys.stdout.write("\033[K")
-            sys.stdout.write(transcript + "\r")
