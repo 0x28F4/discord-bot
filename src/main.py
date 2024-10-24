@@ -43,15 +43,16 @@ async def follow(
         await ctx.respond("You aren't in a voice channel!")
         return
 
-    await join_channel(ctx, cast(dc.VoiceState, voice).channel)
+    await join_channel(ctx, cast(dc.VoiceState, voice).channel, author.id)
 
 
 @bot.slash_command(name="join", description="Join vc and recognize speech")
 async def join(
     ctx: dc.ApplicationContext,
     channel: dc.Option(dc.SlashCommandOptionType.channel),  # type: ignore
+    user: dc.Option(dc.SlashCommandOptionType.user),  # type: ignore
 ):
-    await join_channel(ctx, channel)
+    await join_channel(ctx, channel, user.id)
 
 
 @bot.slash_command(name="quit", description="Quits all vcs")
@@ -85,6 +86,7 @@ async def connect_channel(ctx: dc.ApplicationContext, channel: dc.channel.VoiceC
 async def join_channel(
     ctx: dc.ApplicationContext,
     channel: dc.channel.VoiceChannel,
+    listen_to: int,
 ):
     vc: dc.VoiceClient = await connect_channel(ctx, channel)
     client = SpeechClient()
@@ -109,8 +111,7 @@ async def join_channel(
     )
 
     stream = DiscordStream()
-    sink = Sink(stream=stream)
-    sink.user_id = ctx.author.id
+    sink = Sink(stream=stream, listen_to=listen_to)
     audio_generator = stream.generator()
 
     def requests_gen(config: cloud_speech_types.RecognitionConfig, audio: list):

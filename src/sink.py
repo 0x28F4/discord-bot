@@ -8,14 +8,15 @@ class Sink(dc.sinks.Sink):
     Need this class to capture audio buffers from the pycord library
     """
 
-    def __init__(self, *, stream: DiscordStream, filters=None):
+    def __init__(self, *, stream: DiscordStream, listen_to: int, filters=None):
         if filters is None:
             filters = dc.sinks.default_filters
+        assert listen_to is not None
         self.filters = filters
         dc.sinks.Filters.__init__(self, **self.filters)
         self.vc = None
         self.audio_data = {}
-        self.user_id = None
+        self.user_id = listen_to
         self.stream = stream
 
     def write(self, data, user):
