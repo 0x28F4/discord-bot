@@ -16,6 +16,8 @@ openai = "^1.52.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.3"
+ruff = "^0.7.1"
+pre-commit = "^4.0.1"
 
 [build-system]
 requires = ["poetry-core"]

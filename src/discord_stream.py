@@ -1,12 +1,15 @@
 import queue
 import time
 
+
 def get_current_time() -> int:
     return int(round(time.time() * 1000))
+
 
 RED = "\033[0;31m"
 GREEN = "\033[0;32m"
 YELLOW = "\033[0;33m"
+
 
 class DiscordStream:
     """Opens a recording stream as a generator yielding the audio chunks."""
@@ -23,7 +26,7 @@ class DiscordStream:
     def write(self, data, user) -> None:
         # could check if the user is the author or not
         self._buff.put(data)
-        
+
     def generator(self):
         """Stream Audio from discord to API and to local buffer
 
@@ -53,4 +56,3 @@ class DiscordStream:
                     break
 
             yield b"".join(data)
-

@@ -2,10 +2,12 @@ import discord as dc
 
 from discord_stream import DiscordStream
 
+
 class Sink(dc.sinks.Sink):
     """
     Need this class to capture audio buffers from the pycord library
     """
+
     def __init__(self, *, stream: DiscordStream, filters=None):
         if filters is None:
             filters = dc.sinks.default_filters

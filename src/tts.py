@@ -11,6 +11,7 @@ audio_config = texttospeech.AudioConfig(
     sample_rate_hertz=48000,
 )
 
+
 def tts(content: str):
     synthesis_input = texttospeech.SynthesisInput(text=content)
     response = client.synthesize_speech(
