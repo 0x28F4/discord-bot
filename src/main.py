@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import io
-from time import sleep
 from typing import Dict, cast
 import discord as dc
 import os
@@ -9,14 +8,16 @@ from google.cloud.speech_v2 import SpeechClient
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
 from discord_stream import DiscordStream
-from brain import echo
+from brain import respond
 from sink import Sink
+from utils import DEBUG
 
 assert (TOKEN := os.getenv('DISCORD_TOKEN'))
 assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
 SPEECH_MAX_CHUNK_SIZE = 25600
 
 bot = dc.Bot()
+
 
 @bot.event
 async def on_ready():
@@ -138,6 +139,9 @@ async def join_channel(
     )
 
     def handle_audio(audio_data: bytes):
+        if vc.is_playing():
+            if DEBUG(): print("skip handling audio, because already playing")
+            return
         buffer = io.BytesIO(audio_data)
         buffer.seek(0)
         source = dc.FFmpegPCMAudio(buffer, pipe=True)
@@ -148,10 +152,13 @@ async def join_channel(
     def speech_loop(client, config_request, audio_generator):
         try:
             responses_iterator = client.streaming_recognize(requests=requests_gen(config_request, audio_generator))
-            echo(responses_iterator, on_audio=handle_audio)
+            respond(
+                user=ctx.author.name,
+                responses=responses_iterator,
+                on_audio=handle_audio
+            )
         except Exception as e:
             print("got exception in speech loop: ", e)
-
 
     t = threading.Thread(
         target=speech_loop,
