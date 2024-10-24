@@ -19,8 +19,8 @@ class Sink(dc.sinks.Sink):
         self.stream = stream
 
     def write(self, data, user):
-        # if user == self.user_id:
-        self.stream.write(data=data, user=user)
+        if user == self.user_id:
+            self.stream.write(data=data, user=user)
 
     def cleanup(self):
         self.finished = True
