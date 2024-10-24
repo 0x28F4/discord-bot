@@ -2,6 +2,7 @@ import re
 from typing import List
 
 from openai import OpenAI
+from retry import retry
 from utils import DEBUG
 
 
@@ -37,8 +38,10 @@ class Chat:
         return "\n".join(messages)
 
     def say(self, message: ChatMessage):
+        assert isinstance(message, ChatMessage)
         self.history.append(message)
 
+    @retry(tries=3, delay=0)
     def complete(self):
         completions = self.openai_client.chat.completions.create(
             max_tokens=100,
@@ -55,3 +58,11 @@ class Chat:
             if DEBUG():
                 print("complete", self._format_history())
             return extracted_result
+
+
+if __name__ == "__main__":
+    chat = Chat(llm_name="Jane", system_prompt=open(".prompt").read())
+    while True:
+        print(">", end="")
+        chat.say(ChatMessage(user_name="hero", content=input()))
+        chat.complete()
