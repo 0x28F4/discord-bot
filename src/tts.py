@@ -3,7 +3,9 @@ from google.cloud import texttospeech
 client = texttospeech.TextToSpeechClient()
 
 voice = texttospeech.VoiceSelectionParams(
-    language_code="en-US", ssml_gender=texttospeech.SsmlVoiceGender.NEUTRAL
+    language_code="en-US",
+    name="en-US-Wavenet-C",
+    ssml_gender=texttospeech.SsmlVoiceGender.FEMALE,
 )
 
 audio_config = texttospeech.AudioConfig(

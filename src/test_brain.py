@@ -1,4 +1,5 @@
 from brain import Chat, ChatMessage
+from chat import Config
 
 
 def test_chat_message():
@@ -6,8 +7,17 @@ def test_chat_message():
     assert f"{msg}" == "[foo]: bar"
 
 
+config = Config(
+    name="foo",
+    host="localhost",
+    model="gpt-3.5",
+    bot_name="foo",
+    system_prompt="custom system prompt",
+)
+
+
 def test_chat():
-    chat = Chat(llm_name="robot", system_prompt="custom system prompt")
+    chat = Chat(config=config)
     assert len(chat.history) == 1
     assert chat.history[0] == "custom system prompt"
     chat.say(ChatMessage("foo", "content"))

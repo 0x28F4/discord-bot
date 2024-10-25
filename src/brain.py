@@ -5,10 +5,6 @@ from tts import tts
 from utils import DEBUG
 
 
-with open(".prompt", "r") as pf:
-    SYSTEM_PROMPT = pf.read()
-
-
 def echo(
     responses: Iterable[cloud_speech_types.StreamingRecognizeResponse],
     on_audio: Callable[[bytes], None],
@@ -31,11 +27,9 @@ def echo(
             on_audio(tts(transcript))
 
 
-chat = Chat(llm_name="Jane", system_prompt=SYSTEM_PROMPT)
-
-
 def respond(
     *,
+    chat: Chat,
     user: str,
     responses: Iterable[cloud_speech_types.StreamingRecognizeResponse],
     on_audio: Callable[[bytes], None],

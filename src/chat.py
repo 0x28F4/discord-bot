@@ -3,6 +3,8 @@ from typing import List
 
 from openai import OpenAI
 from retry import retry
+from config import Config
+import config
 from utils import DEBUG
 
 
@@ -16,18 +18,14 @@ class ChatMessage:
 
 
 class Chat:
-    def __init__(
-        self,
-        llm_name: str,
-        system_prompt: str,
-        llm_host: str = "http://localhost:11434/v1",
-    ):
-        self.openai_client = OpenAI(api_key="local", base_url=llm_host)
-        self.llm_name = llm_name
-        self.history: List[ChatMessage] = [system_prompt]
+    def __init__(self, config: Config):
+        self.openai_client = OpenAI(api_key="local", base_url=config["host"])
+        self.bot_name = config["bot_name"]
+        self.model = config["model"]
+        self.history: List[ChatMessage] = [config["system_prompt"]]
 
     def _extract_content(self, text: str):
-        pattern = rf"\[{self.llm_name}\]:(.*)"
+        pattern = rf"\[{self.bot_name}\]:(.*)"
         match = re.search(pattern, text)
         if match:
             return match.group(1).strip()
@@ -46,14 +44,14 @@ class Chat:
         completions = self.openai_client.chat.completions.create(
             max_tokens=100,
             messages=[{"role": "user", "content": self._format_history()}],
-            model="hf.co/TheBloke/opus-v0-7B-GGUF:Q6_K",
+            model=self.model,
         )
 
         if extracted_result := self._extract_content(
             completions.choices[0].message.content
         ):
             self.history.append(
-                ChatMessage(user_name=self.llm_name, content=extracted_result)
+                ChatMessage(user_name=self.bot_name, content=extracted_result)
             )
             if DEBUG():
                 print("complete", self._format_history())
@@ -61,7 +59,7 @@ class Chat:
 
 
 if __name__ == "__main__":
-    chat = Chat(llm_name="Jane", system_prompt=open(".prompt").read())
+    chat = Chat(config=config.load())
     while True:
         print(">", end="")
         chat.say(ChatMessage(user_name="hero", content=input()))

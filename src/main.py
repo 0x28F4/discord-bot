@@ -7,6 +7,8 @@ import os
 from google.cloud.speech_v2 import SpeechClient
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 
+from chat import Chat
+import config
 from discord_stream import DiscordStream
 from brain import respond
 from sink import Sink
@@ -17,6 +19,7 @@ assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
 SPEECH_MAX_CHUNK_SIZE = 25600
 
 bot = dc.Bot()
+chat = Chat(config=config.load())
 
 
 @bot.event
@@ -160,6 +163,7 @@ async def join_channel(
                 requests=requests_gen(config_request, audio_generator)
             )
             respond(
+                chat=chat,
                 user=ctx.author.name,
                 responses=responses_iterator,
                 on_audio=handle_audio,
