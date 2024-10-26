@@ -26,8 +26,13 @@ class Chat:
     def _extract_content(self, text: str):
         pattern = rf"\[{self.bot_name}\]:(.*)"
         match = re.search(pattern, text)
+        if DEBUG(): print(f"--- content ---\n{text}\n--- content ---")
         if match:
-            return match.group(1).strip()
+            extracted = match.group(1).strip()
+            if DEBUG(): print(f"--- extracted content ---\n{extracted}\n--- extracted content ---") 
+            return extracted
+        
+        if DEBUG(): print("no content to extract")
         return None
 
     def _format_history(self):
