@@ -53,8 +53,7 @@ class Chat:
             self.history.append(
                 ChatMessage(user_name=self.bot_name, content=extracted_result)
             )
-            if DEBUG():
-                print("complete", self._format_history())
+            if DEBUG(): print("complete", self._format_history())
             return extracted_result
 
 

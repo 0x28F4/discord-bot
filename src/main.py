@@ -145,8 +145,7 @@ async def join_channel(
 
     def handle_audio(audio_data: bytes):
         if vc.is_playing():
-            if DEBUG():
-                print("skip handling audio, because already playing")
+            if DEBUG(): print("skip handling audio, because already playing")
             return
         buffer = io.BytesIO(audio_data)
         buffer.seek(0)

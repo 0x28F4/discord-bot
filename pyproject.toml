@@ -23,5 +23,5 @@ pre-commit = "^4.0.1"
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
-[lint]
+[tool.ruff.lint]
 ignore = ["E701", "E501"]

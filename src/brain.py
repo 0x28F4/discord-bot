@@ -43,8 +43,7 @@ def respond(
             continue
         transcript = result.alternatives[0].transcript
 
-        if DEBUG():
-            print(f"final={result.is_final}|transcript={transcript}")
+        if DEBUG(): print(f"final={result.is_final}|transcript={transcript}")
         if not result.is_final:
             continue
         chat.say(ChatMessage(user_name=user, content=transcript))
