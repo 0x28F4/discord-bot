@@ -128,7 +128,6 @@ async def join_channel(
         """
 
         started = False
-        # last_is_empty_flag = False
         for buffer in audio:
             if not started:
                 yield config
