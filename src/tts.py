@@ -1,13 +1,9 @@
-from typing import TypedDict
 from google.cloud import texttospeech
 
-class TTSConfig(TypedDict):
-    language_code: str
-    voice: str
+from config import TTSConfig
 
 
 client = texttospeech.TextToSpeechClient()
-
 
 class TTS():
     def __init__(self, config: TTSConfig):

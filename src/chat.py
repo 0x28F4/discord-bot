@@ -1,17 +1,11 @@
 import re
-from typing import List, TypedDict
+from typing import List
 
 from openai import OpenAI
 from retry import retry
+from config import ChatConfig
 import config
 from utils import DEBUG
-
-class ChatConfig(TypedDict):
-    name: str
-    host: str
-    model: str
-    bot_name: str
-    system_prompt: str
 
 class ChatMessage:
     def __init__(self, user_name: str, content: str):
