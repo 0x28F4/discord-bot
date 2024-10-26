@@ -3,18 +3,16 @@ import re
 from typing import TypedDict
 import yaml
 
+from tts import TTSConfig
+from chat import ChatConfig
 
 class Config(TypedDict):
-    name: str
-    host: str
-    model: str
-    bot_name: str
-    system_prompt: str
+    chat: ChatConfig
+    tts: TTSConfig
 
-
-def load(name: str = "example"):
+def load(name: str = "example") -> Config:
     with open(f"config.{name}.yaml", "r") as f:
-        yaml.safe_load(f.read())
+        return yaml.safe_load(f.read())
 
 
 def list():

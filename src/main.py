@@ -10,8 +10,9 @@ from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 from chat import Chat
 import config
 from discord_stream import DiscordStream
-from brain import respond
+from engine import Engine
 from sink import Sink
+from tts import TTS
 from utils import DEBUG
 
 assert (TOKEN := os.getenv("DISCORD_TOKEN"))
@@ -19,7 +20,7 @@ assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
 SPEECH_MAX_CHUNK_SIZE = 25600
 
 bot = dc.Bot()
-chat = Chat(config=config.load())
+cfg = config.load()
 
 
 @bot.event
@@ -37,16 +38,16 @@ async def follow(
     ctx: dc.ApplicationContext,
 ):
     author = ctx.author
-    if "voice" not in dir(author):
+    if not hasattr(author, 'voice'):
         await ctx.respond("Must be called in guild")
         return
-
     voice = author.voice
     if not voice:
         await ctx.respond("You aren't in a voice channel!")
         return
 
-    await join_channel(ctx, cast(dc.VoiceState, voice).channel, author.id)
+    channel = cast(dc.channel.VoiceChannel, cast(dc.VoiceState, voice).channel) 
+    await join_channel(ctx, channel, author.id)
 
 
 @bot.slash_command(name="join", description="Join vc and recognize speech")
@@ -152,6 +153,10 @@ async def join_channel(
         source = dc.FFmpegPCMAudio(buffer, pipe=True)
         vc.play(source)
 
+    chat = Chat(config=cfg["chat"])
+    tts = TTS(config=cfg["tts"])
+    engine = Engine(chat=chat, tts=tts, on_audio=handle_audio)
+
     await ctx.respond("Started recognizing!")
     import threading
 
@@ -160,12 +165,7 @@ async def join_channel(
             responses_iterator = client.streaming_recognize(
                 requests=requests_gen(config_request, audio_generator)
             )
-            respond(
-                chat=chat,
-                user=ctx.author.name,
-                responses=responses_iterator,
-                on_audio=handle_audio,
-            )
+            engine.run(responses_iterator, user=ctx.author.name)
         except Exception as e:
             print("got exception in speech loop: ", e)
 

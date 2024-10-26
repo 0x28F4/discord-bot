@@ -19,8 +19,7 @@ class DiscordStream:
         self.channels = 2
         self.sample_rate = 48000
 
-        self._buff = queue.Queue()
-        # self.closed = True
+        self._buff: queue.Queue = queue.Queue()
         self.closed = False
 
     def write(self, data, user) -> None:
