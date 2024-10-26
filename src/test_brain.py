@@ -1,5 +1,5 @@
-from brain import Chat, ChatMessage
-from chat import Config
+from engine import Chat, ChatMessage
+from config import ChatConfig
 
 
 def test_chat_message():
@@ -7,7 +7,7 @@ def test_chat_message():
     assert f"{msg}" == "[foo]: bar"
 
 
-config = Config(
+config = ChatConfig(
     name="foo",
     host="localhost",
     model="gpt-3.5",

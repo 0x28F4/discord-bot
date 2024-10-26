@@ -3,10 +3,9 @@ from typing import List
 
 from openai import OpenAI
 from retry import retry
-from config import Config
+from config import ChatConfig
 import config
 from utils import DEBUG
-
 
 class ChatMessage:
     def __init__(self, user_name: str, content: str):
@@ -18,17 +17,22 @@ class ChatMessage:
 
 
 class Chat:
-    def __init__(self, config: Config):
+    def __init__(self, config: ChatConfig):
         self.openai_client = OpenAI(api_key="local", base_url=config["host"])
         self.bot_name = config["bot_name"]
         self.model = config["model"]
-        self.history: List[ChatMessage] = [config["system_prompt"]]
+        self.history: List[ChatMessage | str] = [config["system_prompt"]]
 
     def _extract_content(self, text: str):
         pattern = rf"\[{self.bot_name}\]:(.*)"
         match = re.search(pattern, text)
+        if DEBUG(): print(f"--- content ---\n{text}\n--- content ---")
         if match:
-            return match.group(1).strip()
+            extracted = match.group(1).strip()
+            if DEBUG(): print(f"--- extracted content ---\n{extracted}\n--- extracted content ---") 
+            return extracted
+        
+        if DEBUG(): print("no content to extract")
         return None
 
     def _format_history(self):
@@ -58,7 +62,7 @@ class Chat:
 
 
 if __name__ == "__main__":
-    chat = Chat(config=config.load())
+    chat = Chat(config=config.load()["chat"])
     while True:
         print(">", end="")
         chat.say(ChatMessage(user_name="hero", content=input()))

@@ -1,14 +1,18 @@
-name: helpful chatbot
-host: http://localhost:11434/v1
-model: hf.co/TheBloke/opus-v0-7B-GGUF:Q6_K
-bot_name: bot
-system_prompt: |
-  <setting>
-  You are a helpful chatbot. You like to answer questions and are knowledgable in a lot of different fields.
-  If you are asked something specific, you make the best effort to try to answer the question or fulfill the request.
-  You join a chat. In the following conversation your name will be [bot].
-  This story is written as a first-person narrative from the perspective of [hero]
-  </setting>
+chat:
+  name: helpful chatbot
+  host: http://localhost:11434/v1
+  model: hf.co/TheBloke/opus-v0-7B-GGUF:Q6_K
+  bot_name: bot
+  system_prompt: |
+    <setting>
+    You are a helpful chatbot. You like to answer questions and are knowledgable in a lot of different fields.
+    If you are asked something specific, you make the best effort to try to answer the question or fulfill the request.
+    You join a chat. In the following conversation your name will be [bot].
+    This story is written as a first-person narrative from the perspective of [hero]
+    </setting>
 
-  [hero]: Hello!
-  [bot]: Hi, I'm a chatbot, how can I help you?
+    [hero]: Hello!
+    [bot]: Hi, I'm a chatbot, how can I help you?
+tts:
+  language_code: en_US
+  voice: en-US-Wavenet-C
