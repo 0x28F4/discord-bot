@@ -1,4 +1,4 @@
-from engine import Chat, ChatMessage
+from chat import Chat, ChatMessage
 from config import ChatConfig
 
 
