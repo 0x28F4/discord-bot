@@ -5,12 +5,11 @@ from google.cloud.speech_v2 import SpeechClient
 
 from discord_audio import AudioData
 
-assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
 SPEECH_MAX_CHUNK_SIZE = 25600
 
 class STT():
     def __init__(self):
-
+        assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
         self.client = SpeechClient()
         recognition_config = cloud_speech_types.RecognitionConfig(
             explicit_decoding_config=cloud_speech_types.ExplicitDecodingConfig(
