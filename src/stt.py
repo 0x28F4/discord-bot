@@ -1,7 +1,9 @@
 import os
-from typing import Any, Generator, Iterable
+from typing import Any, Generator, Iterable, List
 from google.cloud.speech_v2.types import cloud_speech as cloud_speech_types
 from google.cloud.speech_v2 import SpeechClient
+
+from discord_audio import AudioData
 
 assert (GCP_PROJECT_ID := os.getenv("DISCORD_BOT_GCP_ID"))
 SPEECH_MAX_CHUNK_SIZE = 25600
@@ -31,9 +33,12 @@ class STT():
         )
 
     def stream(self, *, source: Generator[bytes, Any, None]) -> Iterable[cloud_speech_types.StreamingRecognizeResponse]:
-        def _requests_gen(config: cloud_speech_types.RecognitionConfig, audio: list):
+        def _requests_gen(config: cloud_speech_types.RecognitionConfig, audio_data: List[AudioData]):
             started = False
-            for buffer in audio:
+            for audio in audio_data:
+                if audio.silence:
+                    return
+                buffer = audio.data
                 if not started:
                     yield config
                     started = True

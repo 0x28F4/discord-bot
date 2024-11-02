@@ -9,7 +9,6 @@ from chat import Chat
 import config
 from discord_audio import Sink
 from engine import Engine
-from stt import STT
 from tts import TTS
 from utils import DEBUG
 
@@ -103,15 +102,13 @@ async def join_channel(
 
     chat = Chat(config=cfg["chat"])
     tts = TTS(config=cfg["tts"])
-    stt = STT()
     engine = Engine(chat=chat, tts=tts, on_audio=handle_audio)
     await ctx.respond("Started recognizing!")
 
     import threading
     def speech_loop():
         try:
-            responses = stt.stream(source=sink.stream.generator())
-            engine.run(responses=responses, user=ctx.author.name)
+            engine.run(sink.read(), user=ctx.author.name)
         except Exception as e:
             print("got exception in speech loop: ", e)
 
